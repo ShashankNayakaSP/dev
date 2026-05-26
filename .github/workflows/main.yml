@@ -1,26 +1,17 @@
-name: Deploy Static Website to S3
+version: 0.2
 
-on:
-  push:
-    branches:
-      - main
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 269174114725.dkr.ecr.us-east-1.amazonaws.com
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  build:
+    commands:
+      - docker build -t simpledockerservice .
+      - docker tag simpledockerservice:latest 269174114725.dkr.ecr.us-east-1.amazonaws.com/simpledockerservice:latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: us-east-1
-
-      - name: Sync files to S3
-        run: |
-          aws s3 sync ./ s3://shashanknayaka143\
-            --delete \
-            --exclude ".git/*" \
-            --exclude ".github/*"
+  post_build:
+    commands:
+      - docker push 269174114725.dkr.ecr.us-east-1.amazonaws.com/simpledockerservice:latest
+         
